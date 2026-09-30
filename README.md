@@ -1,3 +1,9 @@
+> [!NOTE]
+> **This is [veld-mesh/thinknode-sos](SOS.md)**, an unofficial fork that adds a hold-to-confirm
+> **SOS button** for the Elecrow ThinkNode M3: loud alarm, map pin, and alerts that phones
+> actually notify for, with a companion SOS-to-WhatsApp gateway. **[Read SOS.md](SOS.md).**
+> Everything below is the upstream Meshtastic README. Not affiliated with Meshtastic.
+
 <div align="center" markdown="1">
 
 <img src=".github/meshtastic_logo.png" alt="Meshtastic Logo" width="80"/>

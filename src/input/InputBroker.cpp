@@ -356,6 +356,11 @@ void InputBroker::Init()
         userConfigNoScreen.longLongPress = INPUT_BROKER_SHUTDOWN;
         userConfigNoScreen.doublePress = INPUT_BROKER_SEND_PING;
         userConfigNoScreen.triplePress = INPUT_BROKER_GPS_TOGGLE;
+#if defined(MESHTASTIC_SOS_BUTTON)
+        // Long hold is the SOS gesture (SosModule); shutdown moves to 5 quick presses
+        userConfigNoScreen.suppressLeadUpSound = true;
+        userConfigNoScreen.longLongPress = INPUT_BROKER_NONE;
+#endif
         UserButtonThread->initButton(userConfigNoScreen);
     }
 #endif

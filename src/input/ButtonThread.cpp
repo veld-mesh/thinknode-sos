@@ -12,6 +12,11 @@
 #include "main.h"
 #include "modules/CannedMessageModule.h"
 #include "modules/ExternalNotificationModule.h"
+#include "PowerStatus.h"
+#ifdef ARCH_NRF52
+#include <nrfx_power.h>
+#endif
+#include "modules/SosModule.h"
 #include "power.h"
 #include "sleep.h"
 #ifdef ARCH_PORTDUINO
@@ -22,6 +27,18 @@ using namespace concurrency;
 
 #if HAS_BUTTON
 #endif
+#if defined(MESHTASTIC_SOS_BUTTON)
+// Checked live: PowerStatus only refreshes every ~20 s, so right after unplugging it still says USB.
+static bool usbPowerNow()
+{
+#ifdef ARCH_NRF52
+    return nrfx_power_usbstatus_get() != NRFX_POWER_USB_STATE_DISCONNECTED;
+#else
+    return powerStatus && powerStatus->getHasUSB();
+#endif
+}
+#endif
+
 ButtonThread::ButtonThread(const char *name) : OSThread(name)
 {
     _originName = name;
@@ -247,6 +264,10 @@ int32_t ButtonThread::runOnce()
 
             switch (multipressClickCount) {
             case 3:
+#if defined(MESHTASTIC_SOS_BUTTON)
+                LOG_INFO("Triple press GPS toggle disabled in SOS build");
+                break;
+#endif
                 evt.inputEvent = _triplePress;
                 // evt.kbchar = _triplePress;
                 this->notifyObservers(&evt);
@@ -264,6 +285,23 @@ int32_t ButtonThread::runOnce()
                         LOG_INFO("Unmuted");
                         play4ClickUp(); // Enable tone
                     }
+                }
+                break;
+#endif
+#if defined(MESHTASTIC_SOS_BUTTON)
+            case 5:
+                // Refused while an SOS or alarm is live (tapping to silence it must not turn us off),
+                // and on USB power: the nRF52 can't reach system-off then and sits unresponsive.
+                if (sosModule && (sosModule->isActive() || sosModule->alarmRecently())) {
+                    LOG_WARN("Shutdown refused: SOS active or alarm just sounded");
+                    play4ClickDown();
+                } else if (usbPowerNow()) {
+                    LOG_WARN("Shutdown refused: on USB power, unplug first");
+                    play4ClickDown();
+                } else {
+                    LOG_INFO("5 presses: shutdown");
+                    evt.inputEvent = INPUT_BROKER_SHUTDOWN;
+                    this->notifyObservers(&evt);
                 }
                 break;
 #endif

@@ -21,6 +21,7 @@
 #endif
 #if !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
 #include "modules/DetectionSensorModule.h"
+#include "modules/SosModule.h"
 #endif
 #if !MESHTASTIC_EXCLUDE_NEIGHBORINFO
 #include "modules/NeighborInfoModule.h"
@@ -143,7 +144,10 @@ void setupModules()
         neighborInfoModule = new NeighborInfoModule();
     }
 #endif
-#if !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
+#if defined(MESHTASTIC_SOS_BUTTON)
+    // SOS button replaces the stock detection sensor alert (it reuses its pin and name settings)
+    sosModule = new SosModule();
+#elif !MESHTASTIC_EXCLUDE_DETECTIONSENSOR
     if (moduleConfig.has_detection_sensor && moduleConfig.detection_sensor.enabled) {
         detectionSensorModule = new DetectionSensorModule();
     }
